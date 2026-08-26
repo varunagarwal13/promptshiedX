@@ -1,6 +1,18 @@
-from typing import Literal, Optional
-from pydantic import BaseModel
+"""
+Pydantic Request & Response Schemas for PromptShield X.
+Includes schemas for:
+- Direct Prompt Injection (/analyze)
+- RAG Chunk Protection (/analyze-rag)
+- Multi-vector File, Web, & Code Protection (/analyze-file, /analyze-web, /analyze-code)
+"""
 
+from typing import Literal, Optional, List, Dict, Any
+from pydantic import BaseModel, Field
+
+
+# ==========================================
+# 1. Existing Core Schemas (Direct & RAG)
+# ==========================================
 
 class AnalyzeRequest(BaseModel):
     prompt: str
@@ -21,8 +33,6 @@ class AnalyzeResponse(BaseModel):
     details: str
     rewritten_prompt: Optional[str] = None
 
-
-# --- Added for /analyze-rag (Person B — minimal RAG path) ---
 
 class ChunkRiskResult(BaseModel):
     index: int
@@ -45,3 +55,63 @@ class AnalyzeRagResponse(BaseModel):
     overall_risk_score: int
     overall_action: Literal["PASS", "REWRITE", "BLOCK"]
     chunks: list[ChunkRiskResult]
+
+
+# ==========================================
+# 2. New Schemas for 5 Multi-Vector Extractors
+# ==========================================
+
+class SegmentRiskResult(BaseModel):
+    """Evaluation result for an individual extracted element (e.g. PDF page/annotation, Excel cell, DOM node, Docstring)."""
+    location: str
+    content_preview: str
+    source_type: str
+    is_hidden: bool
+    threat_indicators: List[str]
+    risk_score: int
+    category: Literal[
+        "safe",
+        "prompt_injection",
+        "jailbreak",
+        "prompt_extraction",
+        "agent_manipulation",
+    ]
+    action: Literal["PASS", "REWRITE", "BLOCK"]
+    pattern_matches: List[str]
+    classifier_confidence: float
+    structural_penalty: float = 0.0
+
+
+class FileAnalyzeResponse(BaseModel):
+    """Consolidated report for analyzed files (PDF, Excel, CSV, Image, Web, Code)."""
+    filename: str
+    source_type: str
+    total_segments: int
+    hidden_segments_count: int
+    overall_risk_score: int
+    overall_action: Literal["PASS", "REWRITE", "BLOCK"]
+    overall_category: Literal[
+        "safe",
+        "prompt_injection",
+        "jailbreak",
+        "prompt_extraction",
+        "agent_manipulation",
+    ]
+    is_safe: bool
+    segments: List[SegmentRiskResult]
+    sanitized_content: Optional[str] = None
+    extraction_warnings: List[str] = Field(default_factory=list)
+
+
+class WebAnalyzeRequest(BaseModel):
+    """Direct URL or raw HTML payload for web scraping injection detection."""
+    url: Optional[str] = None
+    html_content: Optional[str] = None
+    user_id: Optional[str] = None
+
+
+class CodeAnalyzeRequest(BaseModel):
+    """Direct code or docstring payload for repo/docstring injection detection."""
+    code: str
+    filename: Optional[str] = "snippet.py"
+    user_id: Optional[str] = None

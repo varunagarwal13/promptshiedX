@@ -37,3 +37,9 @@ httpx==0.27.2
 # --- Dev tooling ---
 black==24.8.0
 ruff==0.6.8
+# Core Extraction
+pymupdf>=1.23.0       # Feature 1: PDF Extractor
+openpyxl>=3.1.2       # Feature 2: Excel Extractor
+Pillow>=10.0.0        # Feature 3: Image processing
+pytesseract>=0.3.10   # Feature 3: OCR text extraction
+beautifulsoup4>=4.12.0 # Feature 4: Web/HTML parsing

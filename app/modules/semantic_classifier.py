@@ -10,6 +10,9 @@ If you later want the faster fine-tuned path, see notebooks/
 promptshield_classifier_training.ipynb and swap this module to load local
 weights from app/modules/weights/ instead.
 """
+import warnings
+# Suppress HuggingFace Transformers future deprecation warnings
+warnings.filterwarnings("ignore", category=FutureWarning, module="transformers")
 
 from functools import lru_cache
 from transformers import pipeline

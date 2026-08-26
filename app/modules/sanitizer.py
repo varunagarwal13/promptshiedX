@@ -7,13 +7,26 @@ the /analyze pipeline.
 
 PLACE THIS FILE AT: app/modules/sanitizer.py
 """
+import warnings
+from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
 
+# Suppress BeautifulSoup warning for plain-text strings that resemble URLs/file paths
+warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 import re
 import unicodedata
 
-from bs4 import BeautifulSoup
 import bleach
+def sanitize(text: str) -> str:
+    if not text:
+        return ""
+    
+    # Only parse with BeautifulSoup if text contains HTML angle brackets
+    if "<" in text and ">" in text:
+        soup = BeautifulSoup(text, "html.parser")
+        text = soup.get_text()
 
+    # Rest of your sanitization logic (unicode normalization, regex, etc.)
+    ...
 
 def strip_html(text: str) -> str:
     """
